@@ -52,12 +52,13 @@ export function renderServerList() {
  */
 export function renderServerSelectOptions() {
     const select = document.getElementById('browserServerSelect');
-    const current = select.value;
     select.innerHTML = '<option value="">请选择服务器...</option>' +
         AppState.servers.map(s =>
             `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`
         ).join('');
-    // 保持之前的选择(若仍存在)
+    // 优先以 AppState 中正在浏览的服务器为准(刷新后不重置),
+    // 其次保留下拉框之前的选择(若仍存在)
+    const current = AppState.currentServer || select.value;
     if (current && AppState.servers.some(s => s.name === current)) {
         select.value = current;
     }

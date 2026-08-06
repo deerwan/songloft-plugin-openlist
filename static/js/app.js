@@ -5,10 +5,13 @@ import {
     addServerConfig, deleteServerConfig, testServerConnection,
     submitRemoteSongs, fetchPlaylists, createPlaylist, addSongsToPlaylist,
 } from './modules/api.js';
-import { AppState, toggleItemSelection, getSelectedItems, parentPath } from './modules/state.js';
+import { AppState, toggleItemSelection, getSelectedItems, parentPath, getRememberedBrowse, clearRememberedBrowse } from './modules/state.js';
 import { showSnackbar, showProgress, hideProgress, escapeHtml } from './modules/ui.js';
 import { loadServerConfigs, readServerForm, clearServerForm } from './modules/config-view.js';
-import { loadDirectory, renderBrowserList, updateBrowserChrome, updateSelectionBar, setSelectMode } from './modules/browser-view.js';
+import {
+    loadDirectory, renderBrowserList, updateBrowserChrome, updateSelectionBar, setSelectMode,
+    setViewMode, updateViewToggleBtn, toggleSelectAll,
+} from './modules/browser-view.js';
 
 // ---------- Tab 切换 ----------
 function switchTab(tabId) {
@@ -75,6 +78,8 @@ async function handleDeleteServer(serverName) {
             renderBrowserList();
             updateBrowserChrome();
         }
+        // 清除指向已删服务器的记忆,避免下次启动恢复到不存在的服务器
+        if (getRememberedBrowse().server === serverName) clearRememberedBrowse();
         await loadServerConfigs();
         showSnackbar('已删除', 'success');
     } catch (e) {
@@ -169,13 +174,39 @@ function bindEvents() {
         btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
 
-    // AppBar 刷新
-    document.getElementById('refreshBtn').addEventListener('click', () => {
-        loadServerConfigs();
+    // AppBar 刷新:保留正在浏览的服务器与路径,仅当该服务器已不存在时才清空
+    document.getElementById('refreshBtn').addEventListener('click', async () => {
+        await loadServerConfigs();
         if (AppState.currentServer) {
-            loadDirectory(AppState.currentServer, AppState.currentPath);
+            if (AppState.servers.some(s => s.name === AppState.currentServer)) {
+                // 服务器仍存在:原地重载当前目录
+                loadDirectory(AppState.currentServer, AppState.currentPath);
+            } else {
+                // 服务器已被删除:重置浏览状态
+                AppState.currentServer = '';
+                AppState.currentPath = '/';
+                AppState.items = [];
+                document.getElementById('browserServerSelect').value = '';
+                renderBrowserList();
+                updateBrowserChrome();
+                clearRememberedBrowse();
+            }
         }
         showSnackbar('已刷新');
+    });
+
+    // 视图切换(列表 / 网格)
+    document.getElementById('viewToggleBtn').addEventListener('click', () => {
+        setViewMode(AppState.viewMode === 'grid' ? 'list' : 'grid');
+    });
+
+    // 面包屑导航:点击任意分段跳到对应目录
+    document.getElementById('browserPathDisplay').addEventListener('click', e => {
+        const seg = e.target.closest('.breadcrumb-seg[data-path]');
+        if (!seg || seg.classList.contains('current')) return;
+        if (AppState.currentServer) {
+            loadDirectory(AppState.currentServer, seg.dataset.path);
+        }
     });
 
     // 服务器管理
@@ -208,7 +239,7 @@ function bindEvents() {
         setSelectMode(!AppState.selectMode);
     });
 
-    // 浏览页:条目点击与复选框(事件委托)
+    // 浏览页:条目点击与复选框(事件委托,兼容列表与网格两种形态)
     const browserList = document.getElementById('browserList');
     browserList.addEventListener('click', e => {
         const checkbox = e.target.closest('input[type="checkbox"]');
@@ -219,12 +250,13 @@ function bindEvents() {
             updateSelectionBar();
             return;
         }
-        const row = e.target.closest('.list-item[data-item-id]');
+        const row = e.target.closest('[data-item-id][data-item-type]');
         if (row) handleItemClick(row.dataset.itemId, row.dataset.itemType);
     });
 
     // FAB 多选操作栏
     document.getElementById('fabCancelBtn').addEventListener('click', () => setSelectMode(false));
+    document.getElementById('fabSelectAllBtn').addEventListener('click', toggleSelectAll);
     document.getElementById('fabImportBtn').addEventListener('click', handleDirectImport);
     document.getElementById('fabPlaylistBtn').addEventListener('click', openPlaylistDialog);
 
@@ -240,7 +272,24 @@ function bindEvents() {
 }
 
 // ---------- 启动 ----------
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     bindEvents();
-    loadServerConfigs();
+    updateViewToggleBtn();
+    await loadServerConfigs();
+    restoreLastBrowse();
 });
+
+/**
+ * 恢复上次浏览的服务器与路径(记忆功能):
+ * 仅当记忆的服务器仍存在时才自动加载,否则静默忽略。
+ */
+async function restoreLastBrowse() {
+    const remembered = getRememberedBrowse();
+    if (!remembered.server) return;
+    if (!AppState.servers.some(s => s.name === remembered.server)) {
+        clearRememberedBrowse();
+        return;
+    }
+    document.getElementById('browserServerSelect').value = remembered.server;
+    await loadDirectory(remembered.server, remembered.path || '/');
+}

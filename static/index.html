@@ -17,8 +17,8 @@
         </button>
     </header>
 
-    <!-- Tab 1: 服务器管理 -->
-    <div class="tab-content active" id="tab-servers">
+    <!-- 服务器管理 -->
+    <div class="tab-content" id="tab-servers">
         <div class="container">
             <!-- 添加服务器卡片 -->
             <div class="card">
@@ -69,8 +69,8 @@
         </div>
     </div>
 
-    <!-- Tab 2: 文件浏览 -->
-    <div class="tab-content" id="tab-browser">
+    <!-- 文件浏览(默认首屏) -->
+    <div class="tab-content active" id="tab-browser">
         <div class="container">
             <!-- 服务器选择 -->
             <div class="card">
@@ -90,6 +90,9 @@
                             <span class="material-symbols-outlined">arrow_upward</span>
                         </button>
                         <div id="browserPathDisplay">/</div>
+                        <button class="btn-icon" id="viewToggleBtn" title="切换视图">
+                            <span class="material-symbols-outlined">grid_view</span>
+                        </button>
                         <button class="btn-text" id="toggleSelectModeBtn" style="display:none;">
                             <span class="material-symbols-outlined">checklist</span> 多选
                         </button>
@@ -104,13 +107,13 @@
 
     <!-- Tab Bar -->
     <nav class="tab-bar" role="tablist">
-        <button class="tab-item active" data-tab="servers" role="tab">
-            <span class="material-symbols-outlined">dns</span>
-            <span>服务器管理</span>
-        </button>
-        <button class="tab-item" data-tab="browser" role="tab">
+        <button class="tab-item active" data-tab="browser" role="tab">
             <span class="material-symbols-outlined">folder</span>
             <span>文件浏览</span>
+        </button>
+        <button class="tab-item" data-tab="servers" role="tab">
+            <span class="material-symbols-outlined">dns</span>
+            <span>服务器管理</span>
         </button>
     </nav>
 
@@ -118,6 +121,9 @@
     <div id="fabContainer" class="fab-container">
         <div style="display:flex;align-items:center;gap:12px;width:100%;">
             <span id="fabSelectionCount" style="font-weight:500;font-size:14px;flex:1;">已选 0 项</span>
+            <button class="btn-text" id="fabSelectAllBtn" style="color:var(--md-on-surface)">
+                <span class="material-symbols-outlined" style="font-size:18px;">select_all</span> 全选本页
+            </button>
             <button class="btn-text" id="fabCancelBtn" style="color:var(--md-on-surface)">取消</button>
             <button class="btn-filled" id="fabImportBtn">
                 <span class="material-symbols-outlined" style="font-size:18px;">cloud_download</span> 直接入库

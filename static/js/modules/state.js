@@ -1,5 +1,43 @@
 // 全局状态 — 纯数据,不含 DOM 操作
 
+// ---------- 本地偏好(localStorage,页面刷新后仍保留) ----------
+const PREF_PREFIX = 'openlist_';
+
+export function readPref(key, fallback = '') {
+    try {
+        return localStorage.getItem(PREF_PREFIX + key) || fallback;
+    } catch (_) {
+        return fallback;
+    }
+}
+
+export function writePref(key, value) {
+    try {
+        localStorage.setItem(PREF_PREFIX + key, String(value));
+    } catch (_) { /* webview 禁用 storage 时忽略 */ }
+}
+
+export function removePref(key) {
+    try {
+        localStorage.removeItem(PREF_PREFIX + key);
+    } catch (_) { /* 忽略 */ }
+}
+
+// 记忆上次浏览的服务器与路径,刷新后自动恢复
+export function rememberBrowse(server, path) {
+    writePref('last_server', server);
+    writePref('last_path', path || '/');
+}
+
+export function getRememberedBrowse() {
+    return { server: readPref('last_server'), path: readPref('last_path', '/') };
+}
+
+export function clearRememberedBrowse() {
+    removePref('last_server');
+    removePref('last_path');
+}
+
 export const AppState = {
     // 已配置的服务器列表 [{ id, name, url }]
     servers: [],
@@ -15,6 +53,8 @@ export const AppState = {
     selectedIds: new Set(),
     // 是否正在加载
     loading: false,
+    // 浏览视图形态:'list' | 'grid'(持久化到 localStorage)
+    viewMode: readPref('view_mode', 'list'),
 };
 
 // ---------- 选择操作 ----------
