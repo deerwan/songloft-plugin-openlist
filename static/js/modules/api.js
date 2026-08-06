@@ -72,12 +72,15 @@ function parseTrackName(fileName) {
 
 /**
  * 批量导入远程歌曲
- * @param {Array<{name:string, path:string, size:number}>} items
+ * 注意:浏览接口返回的条目结构为 { id: 完整路径, name, type, size },
+ * 路径在 id 字段(早期误用 item.path 导致全部入库为同一首歌且无法播放)。
+ * @param {Array<{id:string, name:string, size:number}>} items
  * @param {string} serverName 配置名
  * @returns {Promise<Array<{id:string}>>} 入库后的歌曲 ID 列表
  */
 export async function submitRemoteSongs(items, serverName) {
     const reqs = items.map(item => {
+        const path = item.id; // id 即后端返回的完整文件路径
         const meta = parseTrackName(item.name);
         return {
             title: meta.title,
@@ -86,8 +89,8 @@ export async function submitRemoteSongs(items, serverName) {
             cover_url: '',
             duration: 0,
             plugin_entry_path: 'openlist',
-            source_data: JSON.stringify({ configName: serverName, path: item.path }),
-            dedup_key: `openlist_${serverName}_${item.path}`
+            source_data: JSON.stringify({ configName: serverName, path: path }),
+            dedup_key: `openlist_${serverName}_${path}`
         };
     });
 

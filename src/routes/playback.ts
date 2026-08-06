@@ -11,15 +11,23 @@ import { buildStreamRequest } from '../services/stream'
 export function mountPlaybackRoutes(router: Router): void {
   router.post('/api/music/url', createMusicUrlHandler({
     resolveUrl: async (sourceData) => {
-      const configName = sourceData.configName as string
-      const path = sourceData.path as string
-      if (!configName || !path) throw new Error('Invalid source_data')
+      try {
+        const configName = sourceData.configName as string
+        const path = sourceData.path as string
+        if (!configName || !path) {
+          throw new Error('Invalid source_data: ' + JSON.stringify(sourceData))
+        }
 
-      const config = await getConfig(configName)
-      if (!config) throw new Error('OpenList config not found: ' + configName)
+        const config = await getConfig(configName)
+        if (!config) throw new Error('OpenList config not found: ' + configName)
 
-      const request = await buildStreamRequest(config, path)
-      return request.headers ? { url: request.url, headers: request.headers } : request.url
+        const request = await buildStreamRequest(config, path)
+        return request.headers ? { url: request.url, headers: request.headers } : request.url
+      } catch (err) {
+        // SDK 会吞掉 resolveUrl 的异常并统一返回 404,这里先记日志便于排查
+        songloft.log.warn(`[OpenList] music/url resolve failed: ${String((err as Error)?.message || err)}`)
+        throw err
+      }
     },
   }))
 }

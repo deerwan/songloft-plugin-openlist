@@ -19,6 +19,6 @@
   ],
   "updateUrl": "https://raw.githubusercontent.com/deerwan/songloft-plugin-openlist/main/plugin.json",
   "download_url": "https://github.com/deerwan/songloft-plugin-openlist/releases/download/v0.1.0/openlist.jsplugin.zip",
-  "entryHash": "1e3d80c18993da1c04dcd8f5296a0226a57b0dcac8394eac31db377e579ecf1c",
-  "zipHash": "a8f8cc2be14e2241ea53626de37a31e1f9c67f49003ef58e1ac0abf4366f6130"
+  "entryHash": "ee8adaf12b95017817bda04d70dd3381c3da17d83e715f6ca7fcd98fbcfa6d1c",
+  "zipHash": "ec64e6e7bccd03e43f82c644e4d6508c78fc3c7b42856e3836ea4a04acd6ee21"
 }
