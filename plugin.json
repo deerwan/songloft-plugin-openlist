@@ -10,7 +10,13 @@
   "entryPath": "openlist",
   "main": "main.js",
   "minHostVersion": "2.9.5",
-  "permissions": ["storage","songs.read","songs.write","playlists.read","playlists.write"],
+  "permissions": [
+    "storage",
+    "songs.read",
+    "songs.write",
+    "playlists.read",
+    "playlists.write"
+  ],
   "updateUrl": "https://raw.githubusercontent.com/deerwan/songloft-plugin-openlist/main/plugin.json",
   "download_url": "https://github.com/deerwan/songloft-plugin-openlist/releases/download/v0.1.0/openlist.jsplugin.zip",
   "entryHash": "1e3d80c18993da1c04dcd8f5296a0226a57b0dcac8394eac31db377e579ecf1c",
