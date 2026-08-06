@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>OpenList 音乐源</title>
+    <!-- CSS 变量(--md-*)、字体、reset 由主程序 common.css 注入,插件样式只消费变量 -->
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+    <!-- AppBar -->
+    <header class="app-bar">
+        <span class="material-symbols-outlined">cloud_sync</span>
+        <h1>OpenList 音乐源</h1>
+        <button class="btn-icon" id="refreshBtn" title="刷新">
+            <span class="material-symbols-outlined">refresh</span>
+        </button>
+    </header>
+
+    <!-- Tab 1: 服务器管理 -->
+    <div class="tab-content active" id="tab-servers">
+        <div class="container">
+            <!-- 添加服务器卡片 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="material-symbols-outlined">add_link</span>
+                    添加 OpenList / AList 服务器
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">配置名称</label>
+                        <input type="text" class="text-field" id="serverName" placeholder="例如:我的网盘聚合">
+                    </div>
+                    <div class="form-group" style="margin-top:12px">
+                        <label class="form-label">服务器地址</label>
+                        <input type="text" class="text-field" id="serverUrl" placeholder="例如:http://192.168.1.10:5244">
+                    </div>
+                    <div class="form-group" style="margin-top:12px">
+                        <label class="form-label">用户名(服务端启用游客访问时可留空)</label>
+                        <input type="text" class="text-field" id="serverUsername" placeholder="OpenList 登录用户名">
+                    </div>
+                    <div class="form-group" style="margin-top:12px">
+                        <label class="form-label">密码</label>
+                        <input type="password" class="text-field" id="serverPassword" placeholder="OpenList 登录密码">
+                    </div>
+                    <div class="toolbar" style="padding:16px 0 0;justify-content:flex-end;gap:12px;display:flex;">
+                        <button class="btn-outlined" id="testServerBtn">
+                            <span class="material-symbols-outlined">wifi_tethering</span>
+                            测试连接
+                        </button>
+                        <button class="btn-filled" id="addServerBtn">
+                            <span class="material-symbols-outlined">save</span>
+                            保存服务器
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 已配置的服务器 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="material-symbols-outlined">dns</span>
+                    已配置的服务器
+                </div>
+                <div class="card-body" id="serverList">
+                    <div class="empty-state">暂无服务器,请先添加</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: 文件浏览 -->
+    <div class="tab-content" id="tab-browser">
+        <div class="container">
+            <!-- 服务器选择 -->
+            <div class="card">
+                <div class="card-body" style="display:flex;gap:12px;align-items:center;">
+                    <span class="material-symbols-outlined" style="color:var(--md-primary)">storage</span>
+                    <select id="browserServerSelect" class="text-field" style="flex:1" aria-label="选择服务器">
+                        <option value="">请选择服务器...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 文件列表 -->
+            <div class="card" style="margin-top:16px">
+                <div class="card-header" style="padding-bottom:8px">
+                    <div style="display:flex;align-items:center;gap:8px;width:100%">
+                        <button class="btn-icon" id="browserUpBtn" title="返回上一级">
+                            <span class="material-symbols-outlined">arrow_upward</span>
+                        </button>
+                        <div id="browserPathDisplay">/</div>
+                        <button class="btn-text" id="toggleSelectModeBtn" style="display:none;">
+                            <span class="material-symbols-outlined">checklist</span> 多选
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body" id="browserList" style="padding-top:0">
+                    <div class="empty-state">请选择服务器进行浏览</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Bar -->
+    <nav class="tab-bar" role="tablist">
+        <button class="tab-item active" data-tab="servers" role="tab">
+            <span class="material-symbols-outlined">dns</span>
+            <span>服务器管理</span>
+        </button>
+        <button class="tab-item" data-tab="browser" role="tab">
+            <span class="material-symbols-outlined">folder</span>
+            <span>文件浏览</span>
+        </button>
+    </nav>
+
+    <!-- FAB (多选操作栏) -->
+    <div id="fabContainer" class="fab-container">
+        <div style="display:flex;align-items:center;gap:12px;width:100%;">
+            <span id="fabSelectionCount" style="font-weight:500;font-size:14px;flex:1;">已选 0 项</span>
+            <button class="btn-text" id="fabCancelBtn" style="color:var(--md-on-surface)">取消</button>
+            <button class="btn-filled" id="fabImportBtn">
+                <span class="material-symbols-outlined" style="font-size:18px;">cloud_download</span> 直接入库
+            </button>
+            <button class="btn-filled" id="fabPlaylistBtn" style="background:var(--md-secondary);color:var(--md-on-secondary)">
+                <span class="material-symbols-outlined" style="font-size:18px;">playlist_add</span> 建歌单
+            </button>
+        </div>
+    </div>
+
+    <!-- Snackbar -->
+    <div id="snackbar" class="snackbar"></div>
+
+    <!-- Progress Dialog -->
+    <div id="progressDialog" class="dialog-overlay" role="dialog" aria-modal="true">
+        <div class="dialog" style="max-width: 320px;text-align:center;">
+            <div class="dialog-title" id="progressTitle">正在处理</div>
+            <div class="dialog-content" style="padding:24px 0;">
+                <div class="spinner"></div>
+                <div id="progressText" style="margin-top:16px;color:var(--md-on-surface-variant);font-size:14px;">请稍候...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Playlist Import Dialog -->
+    <div id="playlistDialog" class="dialog-overlay" role="dialog" aria-modal="true">
+        <div class="dialog" style="max-width: 320px;">
+            <div class="dialog-title">导入到歌单</div>
+            <div class="dialog-content">
+                <div class="form-group">
+                    <label class="form-label" for="playlistTarget">目标歌单</label>
+                    <select class="text-field" id="playlistTarget" aria-label="目标歌单" disabled>
+                        <option value="__new__">新建歌单</option>
+                    </select>
+                </div>
+                <div class="form-group" id="playlistNameGroup">
+                    <label class="form-label" for="playlistName">歌单名称</label>
+                    <input type="text" class="text-field" id="playlistName" placeholder="例如:OpenList 精选" aria-label="歌单名称">
+                </div>
+            </div>
+            <div class="dialog-actions">
+                <button class="btn-text" id="cancelPlaylistBtn">取消</button>
+                <button class="btn-filled" id="confirmPlaylistBtn">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 入口脚本:builder 会以此打包 modules/ 下全部模块为 app.bundle.js -->
+    <script type="module" src="static/js/app.js"></script>
+</body>
+</html>

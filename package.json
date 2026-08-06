@@ -1,0 +1,17 @@
+{
+  "name": "openlist",
+  "version": "0.1.0",
+  "description": "通过 OpenList/AList API 接入外部网盘音乐库",
+  "private": true,
+  "scripts": {
+    "build": "songloft-plugin build",
+    "dev": "songloft-plugin dev",
+    "validate": "songloft-plugin validate",
+    "publish:release": "songloft-plugin publish"
+  },
+  "devDependencies": {
+    "@songloft/plugin-sdk": "^2.4.3",
+    "@songloft/plugin-builder": "^2.4.3",
+    "typescript": "^5.9.3"
+  }
+}
