@@ -2,14 +2,14 @@
 // 端点:GET /api/cover?configName=&path=  GET /api/lyric?configName=&path=
 //
 // 封面:优先 fs/get 返回的 thumb;thumb 为相对地址时按服务器根地址补全。
-// 歌词:查找同目录下同名 .lrc 文件(fs/list 同级过滤),读取内容返回。
+// 歌词:从 fs/get 的 related 字段(同级同前缀名文件)找同名 .lrc,读取内容返回。
 
 import { jsonResponse, parseQuery } from '@songloft/plugin-sdk'
 import type { Router } from '@songloft/plugin-sdk'
 import { getConfig } from '../config'
-import { getFile, listFiles } from '../services/openlist-client'
+import { getFile } from '../services/openlist-client'
 import { buildStreamRequest } from '../services/stream'
-import { stripExtension } from '../types'
+import { stripExtension, joinPath } from '../types'
 import type { OpenListConfig } from '../types'
 
 function resolveAbsoluteUrl(config: OpenListConfig, url: string): string {
@@ -79,15 +79,15 @@ export function mountProxyRoutes(router: Router): void {
     if (!config) return fail('Config not found')
 
     try {
-      // 找同级 .lrc:文件所在目录 list 一次,匹配同名歌词文件
+      // 找同级 .lrc:fs/get 的 related 已包含同前缀名文件,无需再 list 整个目录
+      const info = await getFile(config, path)
       const lastSlash = path.lastIndexOf('/')
       const parent = lastSlash <= 0 ? '/' : path.substring(0, lastSlash)
       const baseName = stripExtension(path.substring(lastSlash + 1))
-      const siblings = await listFiles(config, parent)
-      const lyric = siblings.find(i => !i.isDir && stripExtension(i.name) === baseName && i.name.toLowerCase().endsWith('.lrc'))
-      if (!lyric) return fail('Lyric not found')
+      const lyricName = (info.related || []).find(n => stripExtension(n) === baseName && n.toLowerCase().endsWith('.lrc'))
+      if (!lyricName) return fail('Lyric not found')
 
-      const result = await readBytesViaServer(config, lyric.path)
+      const result = await readBytesViaServer(config, joinPath(parent, lyricName))
       if (result.status !== 200) return fail(`Lyric fetch failed: ${result.status}`)
       const text = new TextDecoder('utf-8').decode(result.body)
       return jsonResponse({ code: 0, data: { lyric: text, tlyric: '', rlyric: '', lxlyric: '' } })

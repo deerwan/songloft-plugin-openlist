@@ -1,9 +1,11 @@
-// 路由模块:播放直链解析(主程序标准音源接口)
-// 端点:POST /api/music/url
+// 路由模块:播放直链解析
+// 端点:
+//   POST /api/music/url                        — 主程序标准音源接口
+//   GET  /api/play-url?configName=&path=       — 插件页面内置迷你播放器取直链
 //
 // source_data 结构:{ configName: string, path: string }
 
-import { createMusicUrlHandler } from '@songloft/plugin-sdk'
+import { createMusicUrlHandler, jsonResponse, parseQuery } from '@songloft/plugin-sdk'
 import type { Router } from '@songloft/plugin-sdk'
 import { getConfig } from '../config'
 import { buildStreamRequest } from '../services/stream'
@@ -30,4 +32,24 @@ export function mountPlaybackRoutes(router: Router): void {
       }
     },
   }))
+
+  // 内置迷你播放器取直链:与 music/url 同一套解析策略(见 services/stream.ts)。
+  // 不做字节代理——QuickJS 沙箱内存有限,音频流直接由页面 <audio> 拉取。
+  router.get('/api/play-url', async (req) => {
+    const query = parseQuery(req.query || '')
+    const configName = query.configName || ''
+    const path = query.path || ''
+    if (!configName || !path) {
+      return jsonResponse({ error: 'Missing configName or path' }, 400)
+    }
+    const config = await getConfig(configName)
+    if (!config) return jsonResponse({ error: 'Config not found' }, 404)
+    try {
+      const request = await buildStreamRequest(config, path)
+      return jsonResponse({ url: request.url, headers: request.headers || {} })
+    } catch (err) {
+      songloft.log.warn(`[OpenList] play-url resolve failed: ${String((err as Error)?.message || err)}`)
+      return jsonResponse({ error: String((err as Error)?.message || err) }, 404)
+    }
+  })
 }

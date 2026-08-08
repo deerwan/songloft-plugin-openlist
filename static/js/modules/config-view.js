@@ -6,7 +6,7 @@ import { AppState } from './state.js';
 import { showSnackbar, escapeHtml } from './ui.js';
 
 /**
- * 加载服务器配置并刷新两处 UI:配置列表卡片 + 浏览页服务器下拉框
+ * 加载服务器配置并刷新两处 UI:配置列表卡片 + 服务器管理页的浏览服务器下拉框
  */
 export async function loadServerConfigs() {
     try {
@@ -16,7 +16,7 @@ export async function loadServerConfigs() {
         showSnackbar('加载服务器列表失败:' + e.message, 'error');
     }
     renderServerList();
-    renderServerSelectOptions();
+    renderBrowseServerSelect();
 }
 
 /**
@@ -48,10 +48,10 @@ export function renderServerList() {
 }
 
 /**
- * 渲染浏览页的服务器下拉选项
+ * 渲染「服务器管理」页的浏览服务器下拉选项
  */
-export function renderServerSelectOptions() {
-    const select = document.getElementById('browserServerSelect');
+export function renderBrowseServerSelect() {
+    const select = document.getElementById('browseServerSelect');
     select.innerHTML = '<option value="">请选择服务器...</option>' +
         AppState.servers.map(s =>
             `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`

@@ -20,6 +20,20 @@
     <!-- 服务器管理 -->
     <div class="tab-content" id="tab-servers">
         <div class="container">
+            <!-- 浏览服务器选择 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="material-symbols-outlined">folder_open</span>
+                    浏览服务器
+                </div>
+                <div class="card-body">
+                    <select id="browseServerSelect" class="text-field" aria-label="选择要浏览的服务器">
+                        <option value="">请选择服务器...</option>
+                    </select>
+                    <div class="form-label" style="margin-top:8px;margin-bottom:0">选择后自动进入「文件浏览」页</div>
+                </div>
+            </div>
+
             <!-- 添加服务器卡片 -->
             <div class="card">
                 <div class="card-header">
@@ -72,36 +86,52 @@
     <!-- 文件浏览(默认首屏) -->
     <div class="tab-content active" id="tab-browser">
         <div class="container">
-            <!-- 服务器选择 -->
-            <div class="card">
-                <div class="card-body" style="display:flex;gap:12px;align-items:center;">
-                    <span class="material-symbols-outlined" style="color:var(--md-primary)">storage</span>
-                    <select id="browserServerSelect" class="text-field" style="flex:1" aria-label="选择服务器">
-                        <option value="">请选择服务器...</option>
-                    </select>
-                </div>
+            <!-- 路径工具栏:独立吸顶条,与文件列表卡片分离(服务器在「服务器管理」页选择) -->
+            <div class="browser-toolbar">
+                <button class="btn-icon" id="browserUpBtn" title="返回上一级">
+                    <span class="material-symbols-outlined">arrow_upward</span>
+                </button>
+                <div id="browserPathDisplay">/</div>
+                <button class="btn-icon" id="viewToggleBtn" title="切换视图">
+                    <span class="material-symbols-outlined">grid_view</span>
+                </button>
+                <button class="btn-text" id="toggleSelectModeBtn" style="display:none;">
+                    <span class="material-symbols-outlined">checklist</span> 多选
+                </button>
             </div>
 
             <!-- 文件列表 -->
-            <div class="card" style="margin-top:16px">
-                <div class="card-header" style="padding-bottom:8px">
-                    <div style="display:flex;align-items:center;gap:8px;width:100%">
-                        <button class="btn-icon" id="browserUpBtn" title="返回上一级">
-                            <span class="material-symbols-outlined">arrow_upward</span>
-                        </button>
-                        <div id="browserPathDisplay">/</div>
-                        <button class="btn-icon" id="viewToggleBtn" title="切换视图">
-                            <span class="material-symbols-outlined">grid_view</span>
-                        </button>
-                        <button class="btn-text" id="toggleSelectModeBtn" style="display:none;">
-                            <span class="material-symbols-outlined">checklist</span> 多选
-                        </button>
-                    </div>
-                </div>
+            <div class="card">
                 <div class="card-body" id="browserList" style="padding-top:0">
                     <div class="empty-state">请选择服务器进行浏览</div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- 迷你播放器(点击文件直接播放时出现,悬浮在 Tab Bar 上方) -->
+    <div id="miniPlayer" class="mini-player">
+        <div class="mini-player-progress">
+            <input type="range" id="playerProgress" min="0" max="1000" value="0" aria-label="播放进度">
+        </div>
+        <div class="mini-player-body">
+            <div class="mini-player-info">
+                <div class="mini-player-title" id="playerTitle">未在播放</div>
+                <div class="mini-player-sub" id="playerSub"></div>
+            </div>
+            <span class="mini-player-time" id="playerTime"></span>
+            <button class="btn-icon" id="playerPrevBtn" title="上一首">
+                <span class="material-symbols-outlined">skip_previous</span>
+            </button>
+            <button class="btn-icon" id="playerPlayBtn" title="播放">
+                <span class="material-symbols-outlined">play_arrow</span>
+            </button>
+            <button class="btn-icon" id="playerNextBtn" title="下一首">
+                <span class="material-symbols-outlined">skip_next</span>
+            </button>
+            <button class="btn-icon" id="playerCloseBtn" title="关闭播放器">
+                <span class="material-symbols-outlined">close</span>
+            </button>
         </div>
     </div>
 

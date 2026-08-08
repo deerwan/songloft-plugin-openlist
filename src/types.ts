@@ -30,6 +30,8 @@ export interface OpenListFileInfo {
   sign: string
   thumb?: string
   name?: string
+  /** 同级同前缀名文件名列表(fs/get 的 related 字段,可用于查找同名 .lrc 歌词) */
+  related?: string[]
 }
 
 /** 主程序识别的音频文件扩展名(与 Songloft 扫描规则保持一致) */

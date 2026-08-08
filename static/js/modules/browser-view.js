@@ -204,6 +204,8 @@ export function toggleSelectAll() {
 export function setSelectMode(enabled) {
     AppState.selectMode = enabled;
     if (!enabled) clearSelection();
+    // 顶部多选操作条吸顶时,浏览页内容相应下移(CSS #tab-browser.select-mode)
+    document.getElementById('tab-browser').classList.toggle('select-mode', enabled);
     renderBrowserList();
     updateSelectionBar();
     const toggleBtn = document.getElementById('toggleSelectModeBtn');

@@ -426,6 +426,22 @@ select.text-field { cursor: pointer; }
     opacity: .6;
 }
 
+/* ============ 浏览页路径工具栏(独立吸顶条) ============ */
+/* 工具栏与文件列表卡片分离,各自独立成块:
+ * 滚动列表时工具栏固定在 AppBar 下方,列表从它下方滑过。 */
+.browser-toolbar {
+    position: sticky;
+    top: 56px; /* AppBar 高度,吸顶时紧贴其下 */
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--md-surface, #fffbfe);
+    border-radius: var(--md-radius-md, 12px);
+    box-shadow: var(--md-shadow-1, 0 1px 3px rgba(0,0,0,.1));
+}
+
 /* ============ Snackbar ============ */
 .snackbar {
     position: fixed;
@@ -538,17 +554,21 @@ select.text-field { cursor: pointer; }
 }
 
 /* ============ FAB / 多选操作栏 ============ */
+/* 顶部上下文操作条(Material contextual action bar 模式):
+ * 多选是浏览页的临时模式,操作条吸在 AppBar 下缘;
+ * 底部完整留给迷你播放器,两者永不叠放、互不遮盖
+ * (dav 插件把多选栏固定底部是因为它没有内置播放器,不存在叠加场景)。 */
 .fab-container {
     position: fixed;
-    bottom: calc(64px + env(safe-area-inset-bottom));
+    top: 56px; /* AppBar 高度,吸在其下 */
     left: 0;
     right: 0;
-    z-index: 98;
+    z-index: 60; /* 高于吸顶工具栏(50),低于 AppBar(100) */
     background: var(--md-surface, #fffbfe);
-    border-top: 1px solid var(--md-outline-variant, #e0e0e0);
-    box-shadow: 0 -2px 8px rgba(0,0,0,.08);
+    border-bottom: 1px solid var(--md-outline-variant, #e0e0e0);
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
     padding: 12px 20px;
-    transform: translateY(100%);
+    transform: translateY(-110%);
     opacity: 0;
     transition: transform .3s ease, opacity .3s ease;
     pointer-events: none;
@@ -560,6 +580,78 @@ select.text-field { cursor: pointer; }
     pointer-events: auto;
 }
 
+/* ============ 迷你播放器 ============ */
+.mini-player {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--md-surface-variant, #f3edf7);
+    border-top: 1px solid var(--md-outline-variant, #e0e0e0);
+    box-shadow: 0 -2px 8px rgba(0,0,0,.12);
+    padding-bottom: env(safe-area-inset-bottom);
+    transform: translateY(110%);
+    opacity: 0;
+    transition: transform .25s ease, opacity .25s ease;
+    pointer-events: none;
+}
+
+.mini-player.show {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 播放器打开时内容区底部留白:列表可滚到播放条上方,不被遮住 */
+body.player-open .tab-content { padding-bottom: 280px; }
+
+.mini-player-progress { padding: 6px 16px 0; }
+
+.mini-player-progress input[type="range"] {
+    width: 100%;
+    height: 4px;
+    margin: 0;
+    accent-color: var(--md-primary, #6750a4);
+    cursor: pointer;
+}
+
+.mini-player-body {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 8px 4px;
+}
+
+.mini-player-info { flex: 1; min-width: 0; padding-left: 8px; }
+
+.mini-player-title {
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mini-player-sub {
+    font-size: 12px;
+    color: var(--md-on-surface-variant, #79747e);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 时间并入副标题行(由 JS 拼接),窄屏下控件优先 */
+.mini-player-time { display: none; }
+
+/* 播放器打开时 Snackbar 上移,避免被播放条遮住 */
+body.player-open .snackbar { bottom: 160px; }
+
+/* 多选模式下隐藏路径工具栏:目录导航随多选栏一同隐藏,避免重复展示;
+ * 用 visibility 而非 display:none,DOM 与占位保留,面包屑事件绑定不受影响。
+ * 其占位(约 52px)+ tab-content padding-top(72px)已足够为多选栏(约 64px)让位 */
+#tab-browser.select-mode .browser-toolbar { visibility: hidden; }
+
 /* ============ Responsive ============ */
 @media (max-width: 600px) {
     .container { padding: 0 12px; }
@@ -570,4 +662,104 @@ select.text-field { cursor: pointer; }
     .fab-container > div { flex-wrap: wrap; justify-content: center; }
 
     .dialog { width: 95%; padding: 20px; }
+}
+
+/* ---------- 宽屏断点 1: Desktop (1024px+) ----------
+ * 底部 Tab Bar → 左侧 Navigation Rail(对齐 dav 插件/宿主 components.css)。
+ * 插件 CSS 加载于宿主注入资源之后、同特异性会覆盖宿主规则,
+ * 故必须在本文件自带这套断点,否则 AppBar/列表/fixed 元素与 rail 错位。 */
+@media (min-width: 1024px) {
+    .tab-bar {
+        position: fixed;
+        left: 0; top: 0; bottom: 0;
+        right: auto;
+        width: 80px;
+        height: auto;
+        flex-direction: column;
+        border-top: none;
+        border-right: 1px solid var(--md-outline-variant, #e0e0e0);
+        padding: 72px 0 0;
+        justify-content: flex-start;
+        gap: 8px;
+    }
+
+    .tab-item {
+        flex: none;
+        width: 100%;
+        height: auto;
+        padding: 12px 0;
+    }
+
+    .tab-item::after {
+        top: 7px;
+        left: 50%;
+        transform: translateX(-50%) scaleX(0);
+        width: 56px;
+        height: 32px;
+    }
+
+    .tab-item.active::after {
+        transform: translateX(-50%) scaleX(1);
+    }
+
+    .app-bar { left: 80px; }
+
+    .tab-content {
+        margin-left: 80px;
+        padding-bottom: 160px;
+    }
+
+    .container { max-width: 800px; }
+
+    /* 吸顶/固定元素避开左侧 rail(browser-toolbar 是文档流内 sticky,
+     * 随 .tab-content margin-left 自然让位,无需单独偏移) */
+    .fab-container { left: 80px; }
+    .mini-player { left: 80px; }
+
+    /* Snackbar 在 rail 右缘→视口右缘的内容区内居中 */
+    .snackbar {
+        left: calc(50% + 40px);
+        bottom: 120px;
+    }
+
+    .dialog { min-width: 420px; }
+}
+
+/* ---------- 宽屏断点 2: Large Desktop (1440px+) ---------- */
+@media (min-width: 1440px) {
+    .tab-bar { width: 100px; }
+
+    .app-bar { left: 100px; }
+    .tab-content { margin-left: 100px; }
+    .fab-container { left: 100px; }
+    .mini-player { left: 100px; }
+    .snackbar { left: calc(50% + 50px); }
+
+    .container { max-width: 900px; }
+}
+
+/* ── embed 模式:嵌入 App Tab 时的布局 ──
+ * 主程序 injectHTMLHead 自动注入 components.css/common.js:
+ * ?embed 打开时 common.js 给 <html> 加 embed 类,宿主规则已处理
+ * app-bar 隐藏、tab-bar 顶部化(48px)、tab-content 留白;
+ * 以下补齐 openlist 特有元素的适配(对齐 dav/miot 插件的做法)。 */
+html.embed .fab-container {
+    top: 48px !important; /* embed 下 app-bar 已隐藏,吸在顶部 tab 栏(48px)下缘 */
+    left: 0 !important; /* 覆盖宽屏断点的 rail 偏移:embed 无左侧 rail */
+}
+html.embed .browser-toolbar {
+    top: 48px !important;
+}
+html.embed #tab-browser.select-mode .container {
+    padding-top: 64px; /* embed 下多选操作栏(约 64px)遮挡顶部,列表下移让位 */
+}
+html.embed .snackbar {
+    left: 50% !important; /* 覆盖宿主 embed 规则与宽屏偏移,回到居中 */
+    bottom: 24px !important;
+}
+html.embed body.player-open .snackbar {
+    bottom: 120px !important; /* 播放中仍要避开贴底播放条 */
+}
+html.embed .mini-player {
+    left: 0 !important; /* embed 无左侧 rail,播放条全宽贴底 */
 }

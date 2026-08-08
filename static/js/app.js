@@ -12,6 +12,7 @@ import {
     loadDirectory, renderBrowserList, updateBrowserChrome, updateSelectionBar, setSelectMode,
     setViewMode, updateViewToggleBtn, toggleSelectAll,
 } from './modules/browser-view.js';
+import { initPlayer, playFromList } from './modules/player.js';
 
 // ---------- Tab 切换 ----------
 function switchTab(tabId) {
@@ -93,13 +94,14 @@ function handleItemClick(itemId, itemType) {
         loadDirectory(AppState.currentServer, itemId);
         return;
     }
-    // 文件:多选模式下切换选中;否则提示进入多选
+    // 文件:多选模式下切换选中;否则直接播放(队列=当前目录全部音频)
     if (AppState.selectMode) {
         toggleItemSelection(itemId);
         renderBrowserList();
         updateSelectionBar();
     } else {
-        showSnackbar('点击右上角「多选」以导入歌曲');
+        const files = AppState.items.filter(i => i.type === 'file');
+        playFromList(files, itemId, AppState.currentServer);
     }
 }
 
@@ -169,6 +171,9 @@ async function handleConfirmPlaylist() {
 
 // ---------- 事件绑定 ----------
 function bindEvents() {
+    // 迷你播放器控件
+    initPlayer();
+
     // Tab Bar
     document.querySelectorAll('.tab-item').forEach(btn => {
         btn.addEventListener('click', () => switchTab(btn.dataset.tab));
@@ -186,7 +191,6 @@ function bindEvents() {
                 AppState.currentServer = '';
                 AppState.currentPath = '/';
                 AppState.items = [];
-                document.getElementById('browserServerSelect').value = '';
                 renderBrowserList();
                 updateBrowserChrome();
                 clearRememberedBrowse();
@@ -221,10 +225,12 @@ function bindEvents() {
         if (row) handleDeleteServer(row.dataset.server);
     });
 
-    // 浏览页:服务器切换
-    document.getElementById('browserServerSelect').addEventListener('change', e => {
+    // 服务器管理页:浏览服务器下拉选择,选定后直接切到浏览页
+    document.getElementById('browseServerSelect').addEventListener('change', e => {
         const name = e.target.value;
-        if (name) loadDirectory(name, '/');
+        if (!name) return;
+        switchTab('browser');
+        loadDirectory(name, '/');
     });
 
     // 浏览页:返回上一级
@@ -276,7 +282,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     bindEvents();
     updateViewToggleBtn();
     await loadServerConfigs();
-    restoreLastBrowse();
+    await restoreLastBrowse();
+    // 只有一台服务器且无浏览记忆时直接加载,免去手动选择步骤
+    if (!AppState.currentServer && AppState.servers.length === 1) {
+        loadDirectory(AppState.servers[0].name, '/');
+    }
 });
 
 /**
@@ -290,6 +300,5 @@ async function restoreLastBrowse() {
         clearRememberedBrowse();
         return;
     }
-    document.getElementById('browserServerSelect').value = remembered.server;
     await loadDirectory(remembered.server, remembered.path || '/');
 }

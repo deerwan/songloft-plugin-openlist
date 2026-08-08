@@ -190,9 +190,9 @@ export async function searchFiles(
   }))
 }
 
-/** fs/get 获取文件详情 + 直链 */
+/** fs/get 获取文件详情 + 直链(related 为同级同前缀名文件,含同名 .lrc 歌词) */
 export async function getFile(config: OpenListConfig, path: string): Promise<OpenListFileInfo> {
-  const data = await apiCall<{ raw_url?: string; sign?: string; thumb?: string; name?: string }>(
+  const data = await apiCall<{ raw_url?: string; sign?: string; thumb?: string; name?: string; related?: { name: string }[] }>(
     config, '/api/fs/get', { path },
   )
   return {
@@ -200,6 +200,7 @@ export async function getFile(config: OpenListConfig, path: string): Promise<Ope
     sign: data.sign || '',
     thumb: data.thumb || '',
     name: data.name || '',
+    related: (data.related || []).map(o => o.name),
   }
 }
 
